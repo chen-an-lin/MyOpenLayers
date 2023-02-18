@@ -1,0 +1,176 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>W3.CSS Template</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-black.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
+.w3-sidebar {
+  z-index: 3;
+  width: 250px;
+  top: 43px;
+  bottom: 0;
+  height: inherit;
+}
+
+.w3-main {
+  margin-top: 43px;
+  margin-left:300px;
+  height: 800px;
+}
+
+.w3-sidebar {
+  width: 300px;
+}
+
+/** 資料夾內 */
+.folder 
+{
+  padding-left: 10px;
+}
+.folder-select
+{
+  color: #000 !important;
+  background-color: #ff0000 !important;
+}
+
+</style>
+
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+<script src="https://openlayers.org/ol-cesium/olcesium.js"></script>
+<script src="https://cesiumjs.org/releases/1.62/Build/CesiumUnminified/Cesium.js"></script>
+
+
+<script src="https://kit.fontawesome.com/326146954b.js"></script>
+
+<script src="js/vue.js"></script>
+<script src="js/mixins/mixin.js"></script>
+<script src="chen_an_map.js"></script>
+<script>
+
+    function w3_open() {
+
+      var mySidebar = document.getElementById("mySidebar");
+      var overlayBg = document.getElementById("myOverlay");
+
+      if (mySidebar.style.display === 'block') {
+        mySidebar.style.display = 'none';
+        overlayBg.style.display = "none";
+      } else {
+        mySidebar.style.display = 'block';
+        overlayBg.style.display = "block";
+      }
+    }
+    
+    // Close the sidebar with the close button
+    function w3_close() {
+
+      var mySidebar = document.getElementById("mySidebar");
+      var overlayBg = document.getElementById("myOverlay");
+
+      mySidebar.style.display = "none";
+      overlayBg.style.display = "none";
+    }
+
+    </script>
+
+
+</head>
+<body>
+    <div id="app" class="hide">
+
+        <!-- Navbar -->
+        <div class="w3-top">
+            <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
+              <a class="w3-bar-item w3-button w3-right w3-hide-large w3-hover-white w3-large w3-theme-l1" href="javascript:void(0)" onclick="w3_open()"><i class="fa fa-bars"></i></a>
+            
+              <template v-for="(item, index) in menu.main.list">
+                <a href="#" :title="item.title" class="w3-bar-item w3-button " :class="menu.main.select == menu.main.list[index].name ? 'w3-dark-grey' : '' " href="#" @Click="onClickMenuMain(item)">{{ item.text }}</a>
+              </template>
+
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <nav class="w3-sidebar w3-bar-block w3-collapse w3-large w3-theme-l5 w3-animate-left" id="mySidebar">
+          <a href="javascript:void(0)" onclick="w3_close()" class="w3-right w3-xlarge w3-padding-large w3-hover-black w3-hide-large" title="Close Menu">
+            <i class="fa fa-remove"></i>
+          </a>
+
+          <!-- 副選單(Controller) -->
+          <div v-show="menu.main.select == menu.sub_controller.name">
+            <h4 class="w3-bar-item" @click="menu.sub_controller.show = !menu.sub_controller.show" ><i class='fa' :class="menu.sub_controller.show ? 'fa-folder-open' : 'fa-folder' "></i>&nbsp;<b>ControllerMenu</b></h4>
+            <div class="folder" v-show="menu.sub_controller.show">
+              <template v-for="(item, index) in menu.sub_controller.list">
+
+                <a :title="item.title" v-if="item.name=='Model'" class="w3-bar-item w3-button w3-hover-black" href="#">
+                  <i :class="item.class" style='font-size:24px'></i> {{ item.text }}
+                  <input class="w3-radio" type="radio" value="2d" v-model="config.map.model"><label>2D</label>
+                  <input class="w3-radio" type="radio" value="3d" v-model="config.map.model"><label>3D</label>
+                </a>
+                
+                <a :title="item.title" v-else-if="item.name=='Setting'" class="w3-bar-item w3-button w3-hover-black" href="#">
+                  <i :class="item.class" style='font-size:24px'></i> {{ item.text }}<br />
+
+                  <label>Lat</label>
+                  <input class="w3-input" type="text" v-model="config.map.center.lat">
+                  <label>Lon</label>
+                  <input class="w3-input" type="text" v-model="config.map.center.lon">
+                  <label>Zoom</label>
+                  <input class="w3-input" type="text" v-model="config.map.zoom">
+                  <button class="w3-button w3-green w3-right" @Click="onClickMenuSubController(item)">Send</button>
+                </a>
+                
+                <a :title="item.title" v-else class="w3-bar-item w3-button w3-hover-black" href="#" @Click="onClickMenuSubController(item)"><i :class="item.class" style='font-size:24px'></i> {{ item.text }}</a>
+              </template>
+              <a class="w3-bar-item w3-button w3-hover-black" href="#" v-show="menu.sub_controller.list.length == 0">{{ menu.empty_message }}</a>
+            </div>
+          </div>
+
+          <!-- 副選單(Layer) -->
+          <div v-show="menu.main.select == menu.sub_layer.name">
+            <h4 class="w3-bar-item" @click="menu.sub_layer.show = !menu.sub_layer.show" ><i class='fa' :class="menu.sub_layer.show ? 'fa-folder-open' : 'fa-folder' "></i>&nbsp;<b>LayerMenu</b></h4>
+            <div class="folder" v-show="menu.sub_layer.show">
+
+              <template v-for="(item, index) in menu.sub_layer.list">
+                <a class="w3-bar-item w3-button w3-hover-black" href="#" @Click="onClickMenuSubLayer(item)"><i class='fa' :class="item.show ? 'fa-folder-open' : 'fa-folder' " style='font-size:24px'></i> {{ item.text }}</a>
+                
+                <div class="folder" v-show="item.show">
+                  <template v-for="(item2, index2) in item.list">
+                    <a :title="item2.title" class="w3-bar-item w3-button w3-hover-black" :class="menu.sub_layer.select == item2.name ? 'folder-select' : '' " href="#" @Click="onClickMenuSubLayer(item2)"><i :class="item2.class" style='font-size:24px'></i> {{ item2.text }}</a>
+                  </template>
+                  <a class="w3-bar-item w3-button w3-hover-black" href="#" v-show="item.list.length == 0">{{ menu.empty_message }}</a>
+                </div>
+              </template>
+              <a class="w3-bar-item w3-button w3-hover-black" href="#" v-show="menu.sub_layer.list.length == 0">{{ menu.empty_message }}</a>
+            </div>
+          </div>
+
+        </nav>
+        
+        <!-- Overlay effect when opening sidebar on small screens -->
+        <div class="w3-overlay w3-hide-large" onclick="w3_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+        
+        <!-- Main content: shift it to the right by 250 pixels when the sidebar is visible -->
+        <div class="w3-main" id="map">
+                
+        <!-- END MAIN -->
+        </div>
+
+        
+    </div>
+
+</body>
+</html>
